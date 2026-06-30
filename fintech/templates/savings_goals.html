@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Savings Goals — SmartSpend{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-trophy" style="margin-right: 10px; font-size: 24px;"></i>Savings Goals</h1>
+        <p class="subtitle">Set goals, track progress, and take on spending challenges</p>
+    </div>
+</div>
+
+<!-- Add New Goal Form -->
+<div class="card" style="margin-bottom: 32px;">
+    <div class="card-header">
+        <h3><i class="bi bi-plus-circle" style="margin-right: 8px;"></i>Create New Goal</h3>
+    </div>
+    <form method="POST" action="{{ url_for('savings_goals') }}">
+        <input type="hidden" name="action" value="add">
+        <div class="form-row" style="grid-template-columns: 2fr 1fr 1fr;">
+            <div class="form-group">
+                <label for="goal_name">Goal Name</label>
+                <input type="text" class="form-control" id="goal_name" name="goal_name"
+                       placeholder="e.g., New Laptop, Trip to Goa..." required>
+            </div>
+            <div class="form-group">
+                <label for="target_amount">Target Amount (₹)</label>
+                <input type="number" class="form-control" id="target_amount" name="target_amount"
+                       placeholder="50000" step="100" min="100" required>
+            </div>
+            <div class="form-group">
+                <label for="deadline">Deadline (Optional)</label>
+                <input type="date" class="form-control" id="deadline" name="deadline">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-rocket-takeoff"></i> Create Goal
+        </button>
+    </form>
+</div>
+
+<!-- Active Goals -->
+{% if goals %}
+<h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">
+    <i class="bi bi-flag" style="margin-right: 8px; color: var(--accent-teal);"></i>
+    Your Goals
+</h3>
+<div class="goals-grid">
+    {% for goal in goals %}
+    {% set percentage = (goal['current_amount'] / goal['target_amount'] * 100) if goal['target_amount'] > 0 else 0 %}
+    {% set percentage = [percentage, 100] | min %}
+    <div class="goal-card">
+        <div class="goal-header">
+            <div class="goal-name" style="word-break: break-word; flex: 1; padding-right: 12px;">
+                <i class="bi bi-bullseye" style="color: var(--accent-teal); margin-right: 8px;"></i>
+                {{ goal['goal_name'] }}
+            </div>
+            <!-- Delete Goal -->
+            <a href="{{ url_for('delete_savings_goal_route', goal_id=goal['id']) }}"
+               class="btn btn-danger btn-icon btn-sm" title="Delete goal"
+               style="width: 32px; height: 32px; min-width: 32px;"
+               onclick="return confirm('Delete this savings goal?')">
+                <i class="bi bi-trash3"></i>
+            </a>
+        </div>
+
+        <div class="progress-bar-track" style="margin-top: 12px;">
+            <div class="progress-bar-fill" data-width="{{ percentage | round(1) }}"
+                 style="{% if percentage >= 100 %}background: linear-gradient(135deg, #00e676, #00c853);{% endif %}">
+            </div>
+        </div>
+
+        <div class="goal-amounts" style="margin-top: 12px; margin-bottom: 6px;">
+            <span>₹{{ "{:,.2f}".format(goal['current_amount']) }}</span>
+            <span>₹{{ "{:,.2f}".format(goal['target_amount']) }}</span>
+        </div>
+
+        <div class="d-flex justify-between align-center mb-3">
+            <div class="goal-percentage">
+                {% if percentage >= 100 %}
+                <i class="bi bi-check-circle-fill text-green"></i> Goal Reached!
+                {% else %}
+                {{ percentage | round(1) }}% complete
+                {% endif %}
+            </div>
+            {% if goal['deadline'] %}
+            <div class="text-muted" style="font-size: 12px;">
+                <i class="bi bi-calendar3"></i> {{ goal['deadline'] }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Add Funds (Bottom Row) -->
+        <form method="POST" action="{{ url_for('savings_goals') }}" class="d-flex gap-2 align-center mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+            <input type="hidden" name="action" value="add_funds">
+            <input type="hidden" name="goal_id" value="{{ goal['id'] }}">
+            <input type="number" name="fund_amount" placeholder="Add funds (₹)"
+                   class="form-control" style="font-size: 13px; padding: 8px 12px;"
+                   step="100" min="1" required>
+            <button type="submit" class="btn btn-success btn-sm" style="padding: 8px 16px; font-size: 13px; height: 38px; white-space: nowrap;">
+                <i class="bi bi-plus-lg"></i> Save
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-bottom: 32px;">
+    <div class="empty-state">
+        <i class="bi bi-trophy"></i>
+        <h3>No savings goals yet</h3>
+        <p>Set your first goal above to start tracking your savings progress!</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Expense Challenges -->
+<h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; margin-top: 32px;">
+    <i class="bi bi-lightning-charge" style="margin-right: 8px; color: var(--accent-yellow);"></i>
+    Monthly Spending Challenges
+</h3>
+
+{% for challenge in challenges %}
+<div class="challenge-card">
+    <div class="challenge-header">
+        <div class="challenge-title">
+            <i class="bi {{ category_icons.get(challenge.category, 'bi-three-dots') }}"
+               style="color: {{ category_colors.get(challenge.category, '#95a5a6') }};"></i>
+            Spend less than ₹{{ "{:,.0f}".format(challenge.target) }} on {{ challenge.category }}
+        </div>
+        <div class="challenge-status {% if challenge.success %}on-track{% else %}over{% endif %}">
+            {% if challenge.success %}
+            <i class="bi bi-check-circle"></i> On Track
+            {% else %}
+            <i class="bi bi-x-circle"></i> Over Budget
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="progress-bar-track">
+        <div class="progress-bar-fill" data-width="{{ challenge.percentage }}"
+             style="{% if not challenge.success %}background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));{% endif %}">
+        </div>
+    </div>
+
+    <div class="d-flex justify-between" style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">
+        <span>Spent: ₹{{ "{:,.2f}".format(challenge.spent) }}</span>
+        <span>
+            {% if challenge.success %}
+            Remaining: ₹{{ "{:,.2f}".format(challenge.remaining) }}
+            {% else %}
+            Over by: ₹{{ "{:,.2f}".format(challenge.spent - challenge.target) }}
+            {% endif %}
+        </span>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

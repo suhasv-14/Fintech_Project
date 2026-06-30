@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Recommendations — SmartSpend{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-lightbulb" style="margin-right: 10px; font-size: 24px;"></i>Budget Recommendations</h1>
+        <p class="subtitle">Personalized budget suggestions based on your spending patterns</p>
+    </div>
+</div>
+
+<!-- Overspending Alert -->
+{% if overspending %}
+<div class="alert-banner danger" style="margin-bottom: 24px;">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size: 20px;"></i>
+    <div>
+        <strong>Warning: Your expenses exceed your income!</strong><br>
+        <span style="font-size: 13px; opacity: 0.8;">
+            Total Income: ₹{{ "{:,.2f}".format(total_income) }} |
+            Total Expenses: ₹{{ "{:,.2f}".format(total_expenses) }} |
+            Deficit: ₹{{ "{:,.2f}".format(total_expenses - total_income) }}
+        </span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Summary Bar -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="d-flex justify-between align-center flex-wrap gap-2">
+        <div>
+            <div class="text-muted" style="font-size: 13px; margin-bottom: 4px;">Total Recommended Budget</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--accent-teal);">
+                ₹{{ "{:,.2f}".format(total_recommended) }}
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div class="text-muted" style="font-size: 13px; margin-bottom: 4px;">Current Total Spending</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--accent-red);">
+                ₹{{ "{:,.2f}".format(total_expenses) }}
+            </div>
+        </div>
+        {% if total_income > 0 %}
+        <div style="text-align: right;">
+            <div class="text-muted" style="font-size: 13px; margin-bottom: 4px;">Potential Savings</div>
+            <div style="font-size: 24px; font-weight: 700; color: var(--accent-green);">
+                ₹{{ "{:,.2f}".format(total_income - total_recommended) }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recommendation Cards -->
+{% if recommendations %}
+<div style="margin-bottom: 16px;">
+    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">
+        <i class="bi bi-stars" style="margin-right: 8px; color: var(--accent-yellow);"></i>
+        Category Recommendations
+    </h3>
+</div>
+
+{% for rec in recommendations %}
+<div class="rec-card">
+    <div class="rec-icon"
+         style="background: {{ category_colors.get(rec.category, '#95a5a6') }}15;
+                color: {{ category_colors.get(rec.category, '#95a5a6') }};">
+        <i class="bi {{ category_icons.get(rec.category, 'bi-three-dots') }}"></i>
+    </div>
+    <div class="rec-info">
+        <div class="rec-category">{{ rec.category }}</div>
+        <div class="rec-detail">
+            Based on {{ rec.num_months }} month{{ 's' if rec.num_months != 1 else '' }} of data
+            <span class="status-badge {{ rec.status }}" style="margin-left: 8px;">
+                {% if rec.status == 'increase' %}
+                <i class="bi bi-arrow-up"></i> Rising
+                {% elif rec.status == 'decrease' %}
+                <i class="bi bi-arrow-down"></i> Declining
+                {% else %}
+                <i class="bi bi-dash"></i> Stable
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    <div class="rec-amounts">
+        <div class="rec-avg">Avg: ₹{{ "{:,.2f}".format(rec.avg_spending) }}</div>
+        <div class="rec-recommended"
+             style="color: {{ category_colors.get(rec.category, '#00d2ff') }};">
+            ₹{{ "{:,.2f}".format(rec.recommended) }}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- How It Works -->
+<div class="card" style="margin-top: 32px;">
+    <div class="card-header">
+        <h3><i class="bi bi-info-circle" style="margin-right: 8px;"></i>How Recommendations Work</h3>
+    </div>
+    <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.8;">
+        <p>Our rule-based recommendation engine analyzes your spending patterns:</p>
+        <ul style="margin-top: 8px; padding-left: 20px;">
+            <li><strong style="color: var(--accent-red);">Rising trend (+20%):</strong> We recommend capping at your current average</li>
+            <li><strong style="color: var(--accent-green);">Declining trend:</strong> We recommend 10% below your average — keep it up!</li>
+            <li><strong style="color: var(--accent-teal);">Stable spending:</strong> We recommend your current average as the budget</li>
+        </ul>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="bi bi-lightbulb"></i>
+        <h3>No recommendations yet</h3>
+        <p>Add expenses across a few months to get personalized budget recommendations.</p>
+        <a href="{{ url_for('add_expense') }}" class="btn btn-primary" style="margin-top: 16px;">
+            <i class="bi bi-plus-lg"></i> Add Expense
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

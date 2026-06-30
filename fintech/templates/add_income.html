@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Add Income — SmartSpend{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-cash-stack" style="margin-right: 10px; font-size: 24px;"></i>Add Income</h1>
+        <p class="subtitle">Record your income sources</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <form method="POST" action="{{ url_for('add_income') }}" onsubmit="return validateIncomeForm(this)">
+        <div class="form-group">
+            <label for="source">Income Source</label>
+            <input type="text" class="form-control" id="source" name="source"
+                   placeholder="e.g., Salary, Freelance, Stipend..." required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="amount">Amount (₹)</label>
+                <input type="number" class="form-control" id="amount" name="amount"
+                       placeholder="0.00" step="0.01" min="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" class="form-control" id="date" name="date"
+                       value="{{ today }}" required>
+            </div>
+        </div>
+
+        <div class="d-flex gap-1" style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> Save Income
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Income History -->
+{% if incomes %}
+<div class="card income-list">
+    <div class="card-header">
+        <h3><i class="bi bi-list-check" style="margin-right: 8px;"></i>Income History</h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for income in incomes %}
+            <tr>
+                <td>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-cash-coin text-green"></i>
+                        {{ income['source'] }}
+                    </span>
+                </td>
+                <td class="amount text-green">₹{{ "{:,.2f}".format(income['amount']) }}</td>
+                <td class="date-cell">{{ income['date'] }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('delete_income_route', income_id=income['id']) }}"
+                       class="btn btn-danger btn-icon" title="Delete"
+                       onclick="return confirm('Delete this income entry?')">
+                        <i class="bi bi-trash3"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
